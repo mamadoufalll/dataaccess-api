@@ -9,8 +9,8 @@ class AuditEvent(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     actor_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    action: Mapped[str] = mapped_column(String(50), nullable=False)  # ex: "APPROVE_ACCESS", "REJECT_ACCESS", "CREATE_DATASET"
-    resource_type: Mapped[str] = mapped_column(String(50), nullable=False)  # "dataset", "access_request"
+    action: Mapped[str] = mapped_column(String(50), nullable=False)  
+    resource_type: Mapped[str] = mapped_column(String(50), nullable=False)  
     resource_id: Mapped[int] = mapped_column(Integer, nullable=False)
     details: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow, nullable=False)

@@ -7,7 +7,7 @@ from app.db.session import get_db
 from app.repositories.audit_repository import AuditRepository
 from app.schemas.audit import AuditEventResponse, AuditFilter
 from app.models.user import User, UserRole
-from app.api.routes.auth import get_current_user
+from app.core.permissions import get_current_user
 
 router = APIRouter(prefix="/audit", tags=["Audit"])
 DBSession = Annotated[AsyncSession, Depends(get_db)]

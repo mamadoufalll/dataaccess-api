@@ -6,4 +6,4 @@ def utcnow() -> datetime.datetime:
 
 def utcnow_naive() -> datetime.datetime:
     """Retourne la date/heure UTC actuelle (naive, pour compatibilité SQLite)."""
-    return datetime.datetime.utcnow()
+    return utcnow().replace(tzinfo=None)

@@ -6,7 +6,7 @@ from app.db.session import get_db
 from app.repositories.user_repository import UserRepository
 from app.schemas.user import UserResponse, UserUpdate
 from app.models.user import User
-from app.api.routes.auth import get_current_user
+from app.core.permissions import get_current_user
 from app.core.permissions import is_admin
 
 router = APIRouter(prefix="/users", tags=["Users"])

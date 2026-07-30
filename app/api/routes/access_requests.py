@@ -10,7 +10,7 @@ from app.schemas.access_request import AccessRequestCreate, AccessRequestRespons
 from app.models.user import User, UserRole
 from app.models.dataset import DatasetStatus
 from app.models.access_request import AccessRequest, AccessStatus
-from app.api.routes.auth import get_current_user
+from app.core.permissions import get_current_user
 from app.core.permissions import can_reject
 
 router = APIRouter(prefix="/access-requests", tags=["Access Requests"])

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from jose import JWTError
 from typing import Annotated
@@ -18,34 +18,6 @@ from app.models.user import User
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 DBSession = Annotated[AsyncSession, Depends(get_db)]
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-
-async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db)
-) -> User:
-    payload = decode_token(token)
-    user_id = payload.get("sub")
-    if user_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token invalide",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    repo = UserRepository(db)
-    user = await repo.get(int(user_id))
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Utilisateur introuvable",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Ce compte est désactivé."
-        )
-    return user
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserCreate, db: DBSession):

@@ -36,8 +36,8 @@ async def get_db() -> AsyncSession:
     """
     async with AsyncSessionLocal() as session:
         try:
-            yield session            # On donne la session à la route
-            await session.commit()   # Si tout va bien, on valide
+            yield session            
+            await session.commit()   
         except Exception:
-            await session.rollback() # Si erreur, on annule tout
-            raise                    # On propage l'erreur
+            await session.rollback() 
+            raise                    

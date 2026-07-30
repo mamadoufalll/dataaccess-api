@@ -21,7 +21,7 @@ class UserResponse(BaseModel):
     id: int
     username: str
     email: str
-    role: UserRole  # On utilise l'énumération définie dans le modèle
+    role: UserRole  
     is_active: bool
     created_at: datetime.datetime
 

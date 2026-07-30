@@ -21,7 +21,7 @@ class AccessRequest(Base):
     status: Mapped[AccessStatus] = mapped_column(SQLAlchemyEnum(AccessStatus), default=AccessStatus.PENDING, nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow)
     updated_at: Mapped[datetime.datetime | None] = mapped_column(onupdate=datetime.datetime.utcnow)
-    reviewed_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)  # le data steward qui a traité
+    reviewed_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True) 
     review_comment: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Relations (optionnelles)

@@ -7,7 +7,7 @@ from app.repositories.dataset_repository import DatasetRepository
 from app.schemas.dataset import DatasetCreate, DatasetResponse, DatasetUpdate
 from app.models.user import User, UserRole
 from app.models.dataset import Dataset, DatasetStatus
-from app.api.routes.auth import get_current_user
+from app.core.permissions import get_current_user
 from app.core.permissions import can_publish, can_reject, is_owner
 
 router = APIRouter(prefix="/datasets", tags=["Datasets"])
