@@ -7,10 +7,13 @@ from app.db.session import get_db
 from app.repositories.audit_repository import AuditRepository
 from app.schemas.audit import AuditEventResponse, AuditFilter
 from app.models.user import User, UserRole
-from app.core.permissions import get_current_user
+from app.core.permissions import get_current_user, require_roles
 
 router = APIRouter(prefix="/audit", tags=["Audit"])
 DBSession = Annotated[AsyncSession, Depends(get_db)]
+
+STEWARD_OU_ADMIN = (UserRole.DATA_STEWARD, UserRole.ADMIN)
+
 
 @router.get("/events", response_model=list[AuditEventResponse])
 async def list_audit_events(
@@ -21,12 +24,13 @@ async def list_audit_events(
     end_date: Optional[datetime.datetime] = Query(None, description="Date de fin (inclusive)"),
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(
+        require_roles(
+            *STEWARD_OU_ADMIN,
+            message="Seul un data steward ou admin peut consulter l'audit",
+        )
+    ),
 ):
-    # Seul un admin peut voir l'audit complet (ou data steward, selon le sujet)
-    if current_user.role not in (UserRole.DATA_STEWARD, UserRole.ADMIN):
-        raise HTTPException(403, "Seul un data steward ou admin peut consulter l'audit")
-    
     filters = AuditFilter(
         actor_id=actor_id,
         resource_type=resource_type,

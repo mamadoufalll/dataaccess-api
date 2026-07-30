@@ -10,15 +10,17 @@ from app.schemas.access_request import AccessRequestCreate, AccessRequestRespons
 from app.models.user import User, UserRole
 from app.models.dataset import DatasetStatus
 from app.models.access_request import AccessRequest, AccessStatus
-from app.core.permissions import get_current_user
-from app.core.permissions import can_reject
+from app.core.permissions import get_current_user, require_roles
 
 router = APIRouter(prefix="/access-requests", tags=["Access Requests"])
 DBSession = Annotated[AsyncSession, Depends(get_db)]
 
+STEWARD_OU_ADMIN = (UserRole.DATA_STEWARD, UserRole.ADMIN)
+
+
 @router.post("/", response_model=AccessRequestResponse, status_code=status.HTTP_201_CREATED)
 async def create_access_request(
-    dataset_id: int, 
+    dataset_id: int,
     data: AccessRequestCreate,
     db: DBSession,
     current_user: User = Depends(get_current_user)
@@ -48,18 +50,22 @@ async def create_access_request(
     await db.refresh(new_request)
     return new_request
 
+
 @router.get("/pending", response_model=list[AccessRequestResponse])
 async def get_pending_requests(
     db: DBSession,
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(
+        require_roles(
+            *STEWARD_OU_ADMIN,
+            message="Seul un data steward ou admin peut voir les demandes en attente",
+        )
+    ),
 ):
-    # Seul un data steward ou admin peut voir les demandes en attente
-    if current_user.role not in (UserRole.DATA_STEWARD, UserRole.ADMIN):
-        raise HTTPException(403, "Seul un data steward ou admin peut voir les demandes en attente")
     repo = AccessRequestRepository(db)
     return await repo.get_pending_all(skip, limit)
+
 
 @router.get("/me", response_model=list[AccessRequestResponse])
 async def get_my_requests(
@@ -71,28 +77,31 @@ async def get_my_requests(
     repo = AccessRequestRepository(db)
     return await repo.get_by_requester(current_user.id, skip, limit)
 
+
 @router.patch("/{request_id}/decision", response_model=AccessRequestResponse)
 async def decide_access_request(
     request_id: int,
     data: AccessRequestUpdate,
     db: DBSession,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(
+        require_roles(
+            *STEWARD_OU_ADMIN,
+            message="Seul un data steward ou admin peut prendre une décision",
+        )
+    ),
 ):
-    if current_user.role not in (UserRole.DATA_STEWARD, UserRole.ADMIN):
-        raise HTTPException(403, "Seul un data steward ou admin peut prendre une décision")
-    
     repo = AccessRequestRepository(db)
     access_req = await repo.get(request_id)
     if not access_req:
         raise HTTPException(404, "Demande d'accès non trouvée")
     if access_req.status != AccessStatus.PENDING:
         raise HTTPException(400, "Cette demande a déjà été traitée")
-    
+
     # Mettre à jour la demande
     update_data = data.model_dump()
     update_data["reviewed_by"] = current_user.id
     updated = await repo.update(request_id, AccessRequestUpdate(**update_data))
-    
+
     # Enregistrer l'événement d'audit
     audit_repo = AuditRepository(db)
     await audit_repo.create_event(
@@ -102,5 +111,5 @@ async def decide_access_request(
         resource_id=request_id,
         details=f"Demande d'accès {data.status.value} pour le dataset {access_req.dataset_id}"
     )
-    
+
     return updated

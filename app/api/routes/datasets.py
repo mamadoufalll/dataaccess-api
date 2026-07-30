@@ -7,11 +7,12 @@ from app.repositories.dataset_repository import DatasetRepository
 from app.schemas.dataset import DatasetCreate, DatasetResponse, DatasetUpdate
 from app.models.user import User, UserRole
 from app.models.dataset import Dataset, DatasetStatus
-from app.core.permissions import get_current_user
-from app.core.permissions import can_publish, can_reject, is_owner
+from app.core.permissions import get_current_user, require_roles
 
 router = APIRouter(prefix="/datasets", tags=["Datasets"])
 DBSession = Annotated[AsyncSession, Depends(get_db)]
+
+STEWARD_OU_ADMIN = (UserRole.DATA_STEWARD, UserRole.ADMIN)
 
 
 @router.post("/", response_model=DatasetResponse, status_code=status.HTTP_201_CREATED)
@@ -90,16 +91,13 @@ async def submit_dataset(
 async def publish_dataset(
     dataset_id: int,
     db: DBSession,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(
+        require_roles(
+            *STEWARD_OU_ADMIN,
+            message="Seul un data steward ou admin peut publier",
+        )
+    ),
 ):
-    
-    print(f"🔍 [PUBLISH] Utilisateur ID={current_user.id}, rôle={repr(current_user.role)}, type={type(current_user.role)}")
-
-    
-    if current_user.role not in (UserRole.DATA_STEWARD, UserRole.ADMIN):
-        print(f" Accès refusé pour rôle {current_user.role}")
-        raise HTTPException(403, "Seul un data steward ou admin peut publier")
-
     repo = DatasetRepository(db)
     dataset = await repo.get(dataset_id)
     if not dataset:
@@ -114,10 +112,13 @@ async def publish_dataset(
 async def reject_dataset(
     dataset_id: int,
     db: DBSession,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(
+        require_roles(
+            *STEWARD_OU_ADMIN,
+            message="Seul un data steward ou admin peut rejeter",
+        )
+    ),
 ):
-    if current_user.role not in (UserRole.DATA_STEWARD, UserRole.ADMIN):
-        raise HTTPException(403, "Seul un data steward ou admin peut rejeter")
     repo = DatasetRepository(db)
     dataset = await repo.get(dataset_id)
     if not dataset:
