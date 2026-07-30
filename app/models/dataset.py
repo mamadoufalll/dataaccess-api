@@ -1,3 +1,4 @@
+from app.utils.time import utcnow_naive
 from sqlalchemy import String, Integer, Text, ForeignKey, Enum as SQLAlchemyEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
@@ -36,10 +37,10 @@ class Dataset(Base):
         nullable=False
     )
 
-    created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow)
+    created_at: Mapped[datetime.datetime] = mapped_column(default=utcnow_naive)
     updated_at: Mapped[datetime.datetime | None] = mapped_column(
-        default=datetime.datetime.utcnow,
-        onupdate=datetime.datetime.utcnow,
+        default=utcnow_naive,
+        onupdate=utcnow_naive,
         nullable=True
     )
 

@@ -1,3 +1,4 @@
+from app.utils.time import utcnow_naive
 # app/models/access_request.py
 from sqlalchemy import String, Integer, Text, ForeignKey, DateTime, Enum as SQLAlchemyEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -19,8 +20,8 @@ class AccessRequest(Base):
     justification: Mapped[str] = mapped_column(Text, nullable=False)
     requested_duration_days: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[AccessStatus] = mapped_column(SQLAlchemyEnum(AccessStatus), default=AccessStatus.PENDING, nullable=False)
-    created_at: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.utcnow)
-    updated_at: Mapped[datetime.datetime | None] = mapped_column(onupdate=datetime.datetime.utcnow)
+    created_at: Mapped[datetime.datetime] = mapped_column(default=utcnow_naive)
+    updated_at: Mapped[datetime.datetime | None] = mapped_column(onupdate=utcnow_naive)
     reviewed_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True) 
     review_comment: Mapped[str | None] = mapped_column(Text, nullable=True)
 
