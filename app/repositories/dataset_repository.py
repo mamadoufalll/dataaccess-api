@@ -32,3 +32,11 @@ class DatasetRepository(BaseRepository[Dataset, DatasetCreate, DatasetUpdate]):
         await self.db.flush()
         await self.db.refresh(dataset)
         return dataset
+
+    async def create_for_owner(self, data: DatasetCreate, owner_id: int) -> Dataset:
+        """Crée un dataset en rattachant son propriétaire."""
+        dataset = Dataset(**data.model_dump(), owner_id=owner_id)
+        self.db.add(dataset)
+        await self.db.commit()
+        await self.db.refresh(dataset)
+        return dataset

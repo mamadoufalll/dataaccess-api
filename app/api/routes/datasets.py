@@ -6,7 +6,7 @@ from app.db.session import get_db
 from app.repositories.dataset_repository import DatasetRepository
 from app.schemas.dataset import DatasetCreate, DatasetResponse, DatasetUpdate
 from app.models.user import User, UserRole
-from app.models.dataset import Dataset, DatasetStatus
+from app.models.dataset import DatasetStatus
 from app.core.permissions import get_current_user, require_roles
 
 router = APIRouter(prefix="/datasets", tags=["Datasets"])
@@ -21,19 +21,8 @@ async def create_dataset(
     db: DBSession,
     current_user: User = Depends(get_current_user)
 ):
-    dataset = Dataset(
-        name=data.name,
-        description=data.description,
-        classification=data.classification,
-        purpose=data.purpose,
-        retention_days=data.retention_days,
-        contact=data.contact,
-        owner_id=current_user.id
-    )
-    db.add(dataset)
-    await db.commit()
-    await db.refresh(dataset)
-    return dataset
+    repo = DatasetRepository(db)
+    return await repo.create_for_owner(data, current_user.id)
 
 
 @router.get("/", response_model=list[DatasetResponse])

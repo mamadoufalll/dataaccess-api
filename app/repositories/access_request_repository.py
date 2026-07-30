@@ -33,3 +33,18 @@ class AccessRequestRepository(BaseRepository[AccessRequest, AccessRequestCreate,
             .offset(skip).limit(limit)
         )
         return list(result.scalars().all())
+
+    async def create_for_requester(
+        self, data: AccessRequestCreate, dataset_id: int, requester_id: int
+    ) -> AccessRequest:
+        """Crée une demande d'accès en statut PENDING."""
+        demande = AccessRequest(
+            **data.model_dump(),
+            dataset_id=dataset_id,
+            requester_id=requester_id,
+            status=AccessStatus.PENDING,
+        )
+        self.db.add(demande)
+        await self.db.commit()
+        await self.db.refresh(demande)
+        return demande

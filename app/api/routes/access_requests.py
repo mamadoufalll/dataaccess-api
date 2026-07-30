@@ -9,7 +9,7 @@ from app.repositories.audit_repository import AuditRepository
 from app.schemas.access_request import AccessRequestCreate, AccessRequestResponse, AccessRequestUpdate
 from app.models.user import User, UserRole
 from app.models.dataset import DatasetStatus
-from app.models.access_request import AccessRequest, AccessStatus
+from app.models.access_request import AccessStatus
 from app.core.permissions import get_current_user, require_roles
 
 router = APIRouter(prefix="/access-requests", tags=["Access Requests"])
@@ -37,18 +37,7 @@ async def create_access_request(
     if any(req.requester_id == current_user.id for req in pending):
         raise HTTPException(409, "Vous avez déjà une demande en attente pour ce dataset")
 
-    # Créer la demande avec les bonnes valeurs
-    new_request = AccessRequest(
-        dataset_id=dataset_id,
-        requester_id=current_user.id,
-        justification=data.justification,
-        requested_duration_days=data.requested_duration_days,
-        status=AccessStatus.PENDING
-    )
-    db.add(new_request)
-    await db.commit()
-    await db.refresh(new_request)
-    return new_request
+    return await repo.create_for_requester(data, dataset_id, current_user.id)
 
 
 @router.get("/pending", response_model=list[AccessRequestResponse])
