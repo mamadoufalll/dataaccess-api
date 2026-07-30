@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: dataaccess_db
+    environment:
+      POSTGRES_USER: mdf
+      POSTGRES_PASSWORD: falldemba
+      POSTGRES_DB: dataaccess_db
+    ports:
+      - "5434:5432" 
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mdf"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: dataaccess_api
+    ports:
+      - "8000:8000"
+    environment:
+  
+      DATABASE_URL: postgresql+asyncpg://mdf:falldemba@db:5432/dataaccess_db
+      DEBUG: "True"
+      SECRET_KEY: "change-me-in-production"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app  
+
+volumes:
+  postgres_data:

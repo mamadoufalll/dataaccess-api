@@ -1,0 +1,13 @@
+env/
+.venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+.DS_Store
+.env
+.coverage
+htmlcov/
+.pytest_cache/
+nginx/
+alembic/versions/__pycache__/
