@@ -29,7 +29,7 @@ class DatasetRepository(BaseRepository[Dataset, DatasetCreate, DatasetUpdate]):
         if not dataset:
             return None
         dataset.status = new_status
-        await self.db.flush()
+        await self.db.commit()
         await self.db.refresh(dataset)
         return dataset
 

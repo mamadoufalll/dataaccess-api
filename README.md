@@ -61,13 +61,12 @@ python3 -m venv env
 source env/bin/activate        
 
 pip install -r requirements.txt
-
+```
 
 ---
 
 ## Variables d'environnement
 
-Copier le modele fourni puis renseigner les valeurs :
 
 ```bash
 cp .env.example .env
@@ -90,7 +89,7 @@ Le fichier `.env` est exclu du depot par `.gitignore`. Aucun secret ne doit etre
 
 ## Lancement
 
-### Avec Docker (recommande)
+### Avec Docker
 
 ```bash
 docker compose up --build
@@ -118,9 +117,9 @@ uvicorn app.main:app --reload
 ## Tests
 
 ```bash
-pytest                                        # tous les tests
-pytest tests/unit -v                          # unitaires seulement
-pytest --cov=app --cov-report=term-missing    # avec couverture
+pytest                                       
+pytest tests/unit -v                         
+pytest --cov=app --cov-report=term-missing    
 ```
 
 Les tests s'executent sur **SQLite en memoire** : `tests/conftest.py` surcharge la dependance `get_db` et recree le schema via `Base.metadata` avant chaque test, puis le supprime. Chaque test part donc d'une base vierge, sans interference et sans PostgreSQL a demarrer.
