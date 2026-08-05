@@ -50,10 +50,12 @@ async def update_user(
     if current_user.id != user_id and not est_admin:
         raise HTTPException(403, "Vous n'êtes pas autorisé à modifier cet utilisateur")
 
-    # Seul un administrateur peut changer un rôle ou activer/désactiver un compte
+    # Rôle, domaine et activation relèvent exclusivement de l'administrateur
     if not est_admin:
         if data.role is not None:
             raise HTTPException(403, "Seul un administrateur peut modifier un rôle")
+        if data.domain is not None:
+            raise HTTPException(403, "Seul un administrateur peut affecter un domaine")
         if data.is_active is not None:
             raise HTTPException(403, "Seul un administrateur peut activer ou désactiver un compte")
 
