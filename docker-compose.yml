@@ -1,19 +1,17 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15
     container_name: dataaccess_db
     environment:
-      POSTGRES_USER: mdf
-      POSTGRES_PASSWORD: falldemba
-      POSTGRES_DB: dataaccess_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5434:5432" 
+      - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mdf"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -24,15 +22,20 @@ services:
     ports:
       - "8000:8000"
     environment:
-  
-      DATABASE_URL: postgresql+asyncpg://mdf:falldemba@db:5432/dataaccess_db
-      DEBUG: "True"
-      SECRET_KEY: "change-me-in-production"
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      DEBUG: ${DEBUG:-False}
+      SECRET_KEY: ${SECRET_KEY}
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
     volumes:
-      - .:/app  
+      - ./app:/app/app
 
 volumes:
   postgres_data:
