@@ -28,6 +28,7 @@ class Dataset(Base):
         default=Classification.PUBLIC,
         nullable=False
     )
+    domain: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
     purpose: Mapped[str | None] = mapped_column(Text, nullable=True)
     retention_days: Mapped[int] = mapped_column(Integer, nullable=False, default=365)
     contact: Mapped[str | None] = mapped_column(String(100), nullable=True)
