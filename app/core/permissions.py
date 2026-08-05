@@ -32,6 +32,19 @@ def can_reject(user: User) -> bool:
 
 def is_owner(user: User, owner_id: int) -> bool:
     return user.id == owner_id
+def can_decide_on_dataset(user: User, dataset) -> bool:
+    """Un admin decide partout ; un data steward uniquement dans son domaine.
+
+    Un dataset sans domaine reste instruisible par tout steward, faute de
+    cloisonnement applicable.
+    """
+    if is_admin(user):
+        return True
+    if not is_data_steward(user):
+        return False
+    if dataset.domain is None:
+        return True
+    return user.domain == dataset.domain
 
 
 # Dependances FastAPI (centralisation du RBAC) 

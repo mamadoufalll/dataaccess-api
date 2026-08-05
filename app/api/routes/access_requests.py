@@ -10,7 +10,7 @@ from app.schemas.access_request import AccessRequestCreate, AccessRequestRespons
 from app.models.user import User, UserRole
 from app.models.dataset import DatasetStatus
 from app.models.access_request import AccessStatus
-from app.core.permissions import get_current_user, require_roles
+from app.core.permissions import get_current_user, require_roles, can_decide_on_dataset
 
 router = APIRouter(prefix="/access-requests", tags=["Access Requests"])
 DBSession = Annotated[AsyncSession, Depends(get_db)]
@@ -85,6 +85,12 @@ async def decide_access_request(
         raise HTTPException(404, "Demande d'accès non trouvée")
     if access_req.status != AccessStatus.PENDING:
         raise HTTPException(400, "Cette demande a déjà été traitée")
+
+    # Cloisonnement par domaine : un steward n'instruit que son périmètre
+    dataset_repo = DatasetRepository(db)
+    dataset = await dataset_repo.get(access_req.dataset_id)
+    if not can_decide_on_dataset(current_user, dataset):
+        raise HTTPException(403, "Ce dataset ne relève pas de votre domaine")
 
     # Mettre à jour la demande
     update_data = data.model_dump()
