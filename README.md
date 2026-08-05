@@ -2,7 +2,7 @@
 
 API de gouvernance de donnees : catalogue de datasets, demandes d'acces, instruction des demandes et audit des decisions.
 
-Projet d'examen — Master 1 DSIA, Conception d'API REST avec FastAPI (Sujet 3).
+Projet d'examen — Master 1 DSIA, Conception d'API REST avec FastAPI .
 
 ---
 
@@ -45,7 +45,7 @@ tests/
 alembic/                   migrations
 ```
 
-**Note sur l'emplacement de `get_current_user`.** cet dependance devais etre dans  `app/dependencies/security.py`. L'arborescence imposee par le sujet ne prevoyant pas ce dossier, la dependance a ete placee dans `core/permissions.py`, aux cotes des utilitaires d'habilitation. `core/security.py` reste dedie a la cryptographie pure, sans dependance FastAPI.
+**Note sur l'emplacement de `get_current_user`.** cet dependance devais etre dans `app/dependencies/security.py`. L'arborescence imposee par le sujet ne prevoyant pas ce dossier, la dependance a ete placee dans `core/permissions.py`, aux cotes des utilitaires d'habilitation. `core/security.py` reste dedie a la cryptographie pure, sans dependance FastAPI.
 
 ---
 
@@ -58,7 +58,7 @@ git clone https://github.com/mamadoufalll/dataaccess-api.git
 cd dataaccess-api
 
 python3 -m venv env
-source env/bin/activate        
+source env/bin/activate
 
 pip install -r requirements.txt
 ```
@@ -66,7 +66,6 @@ pip install -r requirements.txt
 ---
 
 ## Variables d'environnement
-
 
 ```bash
 cp .env.example .env
@@ -117,12 +116,14 @@ uvicorn app.main:app --reload
 ## Tests
 
 ```bash
-pytest                                       
-pytest tests/unit -v                         
-pytest --cov=app --cov-report=term-missing    
+pytest
+pytest tests/unit -v
+pytest --cov=app --cov-report=term-missing
 ```
 
 Les tests s'executent sur **SQLite en memoire** : `tests/conftest.py` surcharge la dependance `get_db` et recree le schema via `Base.metadata` avant chaque test, puis le supprime. Chaque test part donc d'une base vierge, sans interference et sans PostgreSQL a demarrer.
+
+La surcharge de `get_db` reproduit la gestion transactionnelle reelle (commit en fin de requete, rollback en cas d'erreur), afin que les tests exercent le meme comportement que la production.
 
 PostgreSQL reste la base de production et celle utilisee par les migrations Alembic dans le pipeline CI.
 
@@ -134,10 +135,12 @@ PostgreSQL reste la base de production et celle utilisee par les migrations Alem
 |---|---|
 | `producer` | creer et mettre a jour ses fiches dataset, demander la publication |
 | `requester` | consulter le catalogue publie, creer une demande d'acces, consulter ses demandes |
-| `data_steward` | instruire les demandes, approuver ou refuser, publier ou rejeter un dataset |
-| `admin` | gerer les utilisateurs et les roles, consulter l'audit complet |
+| `data_steward` | instruire les demandes de son domaine, approuver ou refuser, publier ou rejeter un dataset |
+| `admin` | gerer les utilisateurs, les roles et les domaines, consulter l'audit complet |
 
 L'autorisation est centralisee : aucune route ne contient de test de role en dur. Les habilitations passent par la fabrique de dependances `require_roles()` definie dans `core/permissions.py`.
+
+Le cloisonnement par domaine repose sur le predicat `can_decide_on_dataset()` : un administrateur decide partout, un data steward uniquement sur les datasets de son domaine. Un dataset sans domaine reste instruisible par tout steward, faute de cloisonnement applicable.
 
 ---
 
@@ -155,8 +158,8 @@ L'autorisation est centralisee : aucune route ne contient de test de role en dur
 | Methode | Chemin | Acces |
 |---|---|---|
 | `GET` | `/users/me` | authentifie |
-| `GET` | `/users/` | authentifie |
-| `PATCH` | `/users/{user_id}` | authentifie |
+| `GET` | `/users/` | admin |
+| `PATCH` | `/users/{user_id}` | admin, ou l'interesse pour ses champs non sensibles |
 
 ### Datasets
 
@@ -176,7 +179,7 @@ L'autorisation est centralisee : aucune route ne contient de test de role en dur
 | `POST` | `/access-requests/` | authentifie |
 | `GET` | `/access-requests/me` | authentifie |
 | `GET` | `/access-requests/pending` | data_steward, admin |
-| `PATCH` | `/access-requests/{id}/decision` | data_steward, admin |
+| `PATCH` | `/access-requests/{id}/decision` | data_steward du domaine, admin |
 
 ### Audit et sante
 
@@ -194,6 +197,8 @@ L'autorisation est centralisee : aucune route ne contient de test de role en dur
 - La transition de statut est explicite : `draft` puis `submitted` puis `published` ou `rejected`.
 - Un demandeur ne peut pas deposer deux demandes actives sur le meme dataset (409).
 - Une demande deja instruite ne peut plus etre modifiee (400).
+- Un data steward n'instruit que les demandes portant sur les datasets de son domaine ; un administrateur decide partout.
+- Le role, le domaine et l'activation d'un compte ne sont modifiables que par un administrateur.
 - Toute decision d'approbation ou de refus cree un evenement d'audit.
 
 ---
@@ -237,6 +242,6 @@ Le secret `CODECOV_TOKEN` se declare dans *Settings > Secrets and variables > Ac
 
 ## Limites connues
 
-- **Cloisonnement par domaine non implemente.** Le sujet prevoit qu'un data steward n'instruise que les demandes de son domaine. Les modeles `User` et `Dataset` ne portent pas de champ `domain` ; tout data steward peut donc instruire toute demande. La correction demanderait une colonne sur les deux modeles, une migration, et un predicat `can_decide_on_dataset()` croisant le domaine de l'utilisateur et celui du dataset.
 - **Expiration automatique des demandes.** L'invariant prevoyant qu'une demande expire si sa date de fin est passee n'est pas encore applique.
 - **`models/role.py`.** La table `roles` existe mais la source de verite des habilitations est l'enumeration `UserRole` portee par le modele `User`.
+- **`utils/pagination.py`.** Le helper `paginate()` est teste unitairement mais n'est pas encore branche dans les routes paginees, qui retournent directement une liste sans compteur total.
