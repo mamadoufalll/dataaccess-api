@@ -29,7 +29,7 @@ class DatasetRepository(BaseRepository[Dataset, DatasetCreate, DatasetUpdate]):
         if not dataset:
             return None
         dataset.status = new_status
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(dataset)
         return dataset
 
@@ -37,6 +37,6 @@ class DatasetRepository(BaseRepository[Dataset, DatasetCreate, DatasetUpdate]):
         """Crée un dataset en rattachant son propriétaire."""
         dataset = Dataset(**data.model_dump(), owner_id=owner_id)
         self.db.add(dataset)
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(dataset)
         return dataset

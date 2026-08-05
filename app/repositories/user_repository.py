@@ -33,6 +33,6 @@ class UserRepository(BaseRepository[User, UserCreate, UserUpdate]):
             is_active=True
         )
         self.db.add(user)
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(user)
         return user

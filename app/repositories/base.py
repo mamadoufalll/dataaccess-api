@@ -32,7 +32,7 @@ class BaseRepository(Generic[ModelType, CreateSchema, UpdateSchema]):
         """Crée un nouvel enregistrement."""
         instance = self.model(**data.model_dump())
         self.db.add(instance)
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(instance)
         return instance
 
@@ -47,7 +47,7 @@ class BaseRepository(Generic[ModelType, CreateSchema, UpdateSchema]):
             .where(self.model.id == id)
             .values(**update_data)
         )
-        await self.db.commit()
+        await self.db.flush()
         return await self.get(id)
 
     # SUPPRIMER
@@ -56,5 +56,5 @@ class BaseRepository(Generic[ModelType, CreateSchema, UpdateSchema]):
         result = await self.db.execute(
             delete(self.model).where(self.model.id == id)
         )
-        await self.db.commit()
+        await self.db.flush()
         return result.rowcount > 0

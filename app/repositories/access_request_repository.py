@@ -45,6 +45,6 @@ class AccessRequestRepository(BaseRepository[AccessRequest, AccessRequestCreate,
             status=AccessStatus.PENDING,
         )
         self.db.add(demande)
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(demande)
         return demande
