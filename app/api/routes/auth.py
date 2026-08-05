@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
-from jose import JWTError
 from typing import Annotated
 from app.db.session import get_db
 from app.repositories.user_repository import UserRepository
@@ -10,10 +9,10 @@ from app.core.security import (
     create_access_token,
     create_refresh_token,
     verify_password,
-    decode_token
+
 )
 from app.core.config import settings
-from app.models.user import User
+from app.schemas.auth import Token
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 DBSession = Annotated[AsyncSession, Depends(get_db)]
@@ -29,7 +28,8 @@ async def register(user_data: UserCreate, db: DBSession):
     new_user = await repo.create_with_hashed_password(user_data)
     return new_user
 
-@router.post("/login")
+
+@router.post("/login", response_model=Token)
 async def login(
     db: DBSession,
     form_data: OAuth2PasswordRequestForm = Depends(),
